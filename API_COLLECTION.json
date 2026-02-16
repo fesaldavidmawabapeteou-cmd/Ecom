@@ -1,0 +1,194 @@
+{
+  "info": {
+    "name": "ROUKI API - Supabase Backend",
+    "description": "Collection Postman/Thunder Client pour tester l'API ROUKI",
+    "version": "1.0.0"
+  },
+  "variables": {
+    "BASE_URL": "https://{{PROJECT_ID}}.supabase.co/functions/v1/make-server-643ea828",
+    "ANON_KEY": "{{YOUR_SUPABASE_ANON_KEY}}"
+  },
+  "requests": [
+    {
+      "name": "Health Check",
+      "method": "GET",
+      "url": "{{BASE_URL}}/health",
+      "description": "Vérifier que le serveur fonctionne"
+    },
+    {
+      "name": "Admin Login",
+      "method": "POST",
+      "url": "{{BASE_URL}}/admin/login",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "email": "admin@roukii.fr",
+        "password": "admin123"
+      }
+    },
+    {
+      "name": "Get All Products",
+      "method": "GET",
+      "url": "{{BASE_URL}}/products",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Get Product by ID",
+      "method": "GET",
+      "url": "{{BASE_URL}}/products/1",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Create Product",
+      "method": "POST",
+      "url": "{{BASE_URL}}/products",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "name": "Test Product",
+        "description": "Product de test",
+        "gender": "homme",
+        "style": "streetwear",
+        "price": 15000,
+        "costPrice": 8000,
+        "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500",
+        "sizes": [
+          { "size": "M", "stock": 10 },
+          { "size": "L", "stock": 15 }
+        ]
+      }
+    },
+    {
+      "name": "Update Product",
+      "method": "PUT",
+      "url": "{{BASE_URL}}/products/1",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "price": 16000,
+        "isActive": true
+      }
+    },
+    {
+      "name": "Delete Product",
+      "method": "DELETE",
+      "url": "{{BASE_URL}}/products/PROD-123456789",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Get All Orders",
+      "method": "GET",
+      "url": "{{BASE_URL}}/orders",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Create Order",
+      "method": "POST",
+      "url": "{{BASE_URL}}/orders",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "customerName": "Jean Test",
+        "phone": "90123456",
+        "city": "Lomé",
+        "note": "Livraison rapide SVP",
+        "items": [
+          {
+            "product": {
+              "id": "1",
+              "name": "T-Shirt Streetwear Premium",
+              "price": 15000,
+              "costPrice": 8000
+            },
+            "size": "M",
+            "quantity": 2
+          }
+        ],
+        "total": 30000
+      }
+    },
+    {
+      "name": "Update Order Status",
+      "method": "PUT",
+      "url": "{{BASE_URL}}/orders/ORD-123456789/status",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "status": "confirmed"
+      }
+    },
+    {
+      "name": "Get All Styles",
+      "method": "GET",
+      "url": "{{BASE_URL}}/styles",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Create Style",
+      "method": "POST",
+      "url": "{{BASE_URL}}/styles",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "name": "Sport",
+        "slug": "sport",
+        "description": "Style sportif et dynamique"
+      }
+    },
+    {
+      "name": "Update Style",
+      "method": "PUT",
+      "url": "{{BASE_URL}}/styles/1",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{ANON_KEY}}"
+      },
+      "body": {
+        "description": "Description mise à jour"
+      }
+    },
+    {
+      "name": "Delete Style",
+      "method": "DELETE",
+      "url": "{{BASE_URL}}/styles/STYLE-123456789",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    },
+    {
+      "name": "Get Stats",
+      "method": "GET",
+      "url": "{{BASE_URL}}/stats",
+      "headers": {
+        "Authorization": "Bearer {{ANON_KEY}}"
+      }
+    }
+  ],
+  "curl_examples": {
+    "health_check": "curl https://[PROJECT_ID].supabase.co/functions/v1/make-server-643ea828/health",
+    "get_products": "curl https://[PROJECT_ID].supabase.co/functions/v1/make-server-643ea828/products -H 'Authorization: Bearer [ANON_KEY]'",
+    "login": "curl -X POST https://[PROJECT_ID].supabase.co/functions/v1/make-server-643ea828/admin/login -H 'Content-Type: application/json' -H 'Authorization: Bearer [ANON_KEY]' -d '{\"email\":\"admin@roukii.fr\",\"password\":\"admin123\"}'"
+  }
+}
