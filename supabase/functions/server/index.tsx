@@ -190,8 +190,8 @@ async function initializeDefaultData() {
 
     // Default admin credentials
     await kv.set('admin:credentials', {
-      email: 'admin@roukii.fr',
-      password: 'admin123' // Dans un vrai système, ce serait hashé
+      email: 'admin@roukii.com',
+      password: 'Roukii@2026' // Dans un vrai système, ce serait hashé
     });
 
     // Mark as initialized

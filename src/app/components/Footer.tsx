@@ -33,7 +33,7 @@ export const Footer = () => {
             <h4 className="mb-3">Contact</h4>
             <div className="flex items-center gap-2 text-gray-400 text-sm">
               <Mail className="w-4 h-4" />
-              <span>contact@roukii.fr</span>
+              <span>contact@roukii.com</span>
             </div>
           </div>
 
