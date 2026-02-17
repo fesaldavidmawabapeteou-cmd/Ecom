@@ -17,11 +17,15 @@ export const Checkout = () => {
 
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newOrderId = createOrder(formData);
-    setOrderId(newOrderId);
-    setOrderPlaced(true);
+    try {
+      const newOrderId = await createOrder(formData);
+      setOrderId(newOrderId);
+      setOrderPlaced(true);
+    } catch (error) {
+      console.error('Error creating order:', error);
+    }
   };
 
   if (cart.length === 0 && !orderPlaced) {
