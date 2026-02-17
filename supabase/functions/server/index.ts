@@ -487,6 +487,7 @@ app.get("/make-server-643ea828/orders/:id", async (c) => {
 // Create order
 app.post("/make-server-643ea828/orders", async (c) => {
   try {
+    console.log('🛍️ POST /orders called - creating new order');
     const orderData = await c.req.json();
     const id = `ORD-${Date.now()}`;
     
@@ -497,6 +498,7 @@ app.post("/make-server-643ea828/orders", async (c) => {
       createdAt: new Date().toISOString()
     };
 
+    console.log('💾 Saving order to KV:', id);
     await kv.set(`orders:${id}`, newOrder);
 
     // Update product stock
@@ -513,7 +515,9 @@ app.post("/make-server-643ea828/orders", async (c) => {
     }
 
     // Send email to admin
+    console.log('📧 About to call sendOrderEmailToAdmin for:', id);
     await sendOrderEmailToAdmin(newOrder);
+    console.log('✅ sendOrderEmailToAdmin completed for:', id);
 
     return c.json({ success: true, order: newOrder }, 201);
   } catch (error) {
