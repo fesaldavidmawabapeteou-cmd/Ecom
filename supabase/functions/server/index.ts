@@ -206,6 +206,18 @@ async function initializeDefaultData() {
 // Run initialization on server start
 initializeDefaultData();
 
+// ==================== DEBUG LOGGING ====================
+async function debugLog(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  const logEntry = { timestamp, message, data };
+  const logs = (await kv.get('debug_logs') as any[]) || [];
+  logs.push(logEntry);
+  // Keep only last 100 logs
+  if (logs.length > 100) logs.shift();
+  await kv.set('debug_logs', logs);
+  console.log(message, data);
+}
+
 // ==================== HEALTH CHECK ====================
 app.get("/make-server-643ea828/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -320,14 +332,15 @@ app.delete("/make-server-643ea828/products/:id", async (c) => {
 // ==================== EMAIL SENDER ====================
 async function sendOrderEmailToAdmin(order: Order) {
   try {
-    console.log('📧 sendOrderEmailToAdmin called for order:', order.id);
+    await debugLog('📧 sendOrderEmailToAdmin called for order:', order.id);
     
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    console.log('🔑 RESEND_API_KEY found:', !!resendApiKey);
-    console.log('📋 Available env keys:', Object.keys(Deno.env.toObject()).filter(k => k.includes('RESEND') || k.includes('EMAIL')));
+    await debugLog('🔑 RESEND_API_KEY found:', !!resendApiKey);
+    const envKeys = Object.keys(Deno.env.toObject()).filter(k => k.includes('RESEND') || k.includes('EMAIL'));
+    await debugLog('📋 Available env keys:', envKeys);
     
     if (!resendApiKey) {
-      console.warn('⚠️ RESEND_API_KEY not configured — email not sent');
+      await debugLog('⚠️ RESEND_API_KEY not configured — email not sent');
       return;
     }
 
@@ -487,7 +500,7 @@ app.get("/make-server-643ea828/orders/:id", async (c) => {
 // Create order
 app.post("/make-server-643ea828/orders", async (c) => {
   try {
-    console.log('🛍️ POST /orders called - creating new order');
+    await debugLog('🛍️ POST /orders called - creating new order');
     const orderData = await c.req.json();
     const id = `ORD-${Date.now()}`;
     
@@ -498,7 +511,7 @@ app.post("/make-server-643ea828/orders", async (c) => {
       createdAt: new Date().toISOString()
     };
 
-    console.log('💾 Saving order to KV:', id);
+    await debugLog('💾 Saving order to KV:', id);
     await kv.set(`orders:${id}`, newOrder);
 
     // Update product stock
@@ -515,13 +528,13 @@ app.post("/make-server-643ea828/orders", async (c) => {
     }
 
     // Send email to admin
-    console.log('📧 About to call sendOrderEmailToAdmin for:', id);
+    await debugLog('📧 About to call sendOrderEmailToAdmin for:', id);
     await sendOrderEmailToAdmin(newOrder);
-    console.log('✅ sendOrderEmailToAdmin completed for:', id);
+    await debugLog('✅ sendOrderEmailToAdmin completed for:', id);
 
     return c.json({ success: true, order: newOrder }, 201);
   } catch (error) {
-    console.error('Error creating order:', error);
+    await debugLog('❌ Error creating order:', error);
     return c.json({ success: false, message: `Error creating order: ${error}` }, 500);
   }
 });
@@ -545,6 +558,27 @@ app.put("/make-server-643ea828/orders/:id/status", async (c) => {
   } catch (error) {
     console.error('Error updating order status:', error);
     return c.json({ success: false, message: `Error updating order status: ${error}` }, 500);
+  }
+});
+
+// ==================== DEBUG ====================
+// Get debug logs
+app.get("/make-server-643ea828/debug_logs", async (c) => {
+  try {
+    const logs = (await kv.get('debug_logs')) as any[] || [];
+    return c.json({ success: true, logs });
+  } catch (error) {
+    return c.json({ success: false, message: `Error fetching debug logs: ${error}` }, 500);
+  }
+});
+
+// Clear debug logs
+app.delete("/make-server-643ea828/debug_logs", async (c) => {
+  try {
+    await kv.del('debug_logs');
+    return c.json({ success: true, message: 'Debug logs cleared' });
+  } catch (error) {
+    return c.json({ success: false, message: `Error clearing debug logs: ${error}` }, 500);
   }
 });
 
