@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { projectId, publicAnonKey } from '/utils/supabase/info';
 
-const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-643ea828`;
+const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/server`;
 
 interface ApiResponse<T> {
   success: boolean;
