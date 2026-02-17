@@ -317,6 +317,136 @@ app.delete("/make-server-643ea828/products/:id", async (c) => {
   }
 });
 
+// ==================== EMAIL SENDER ====================
+async function sendOrderEmailToAdmin(order: Order) {
+  try {
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    if (!resendApiKey) {
+      console.warn('⚠️ RESEND_API_KEY not configured — email not sent');
+      return;
+    }
+
+    const adminCreds = await kv.get('admin:credentials');
+    const adminEmail = adminCreds?.email || 'admin@roukii.com';
+    const fromDomain = Deno.env.get('EMAIL_FROM_DOMAIN') || 'noreply@order.roukii.com';
+
+    const itemsHtml = order.items
+      .map(i => `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${i.product.name}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${i.size}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">×${i.quantity}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${(i.product.price * i.quantity).toLocaleString('fr-FR')} FCFA</td>
+        </tr>
+      `)
+      .join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #f5f5f5; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+            .header h1 { margin: 0; color: #222; }
+            .order-info { background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+            .order-info p { margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            table th { background-color: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+            .total { font-size: 18px; font-weight: bold; text-align: right; padding: 15px; background-color: #f9f9f9; border-radius: 4px; }
+            .note { background-color: #fff9e6; padding: 15px; border-left: 4px solid #ffc107; margin-top: 15px; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>📦 Nouvelle Commande Reçue</h1>
+              <p style="margin: 10px 0 0 0; color: #666;">Commande ID: <strong>${order.id}</strong></p>
+            </div>
+
+            <div class="order-info">
+              <h3 style="margin-top: 0;">Information Client</h3>
+              <p><strong>Nom:</strong> ${order.customerName}</p>
+              <p><strong>Téléphone:</strong> ${order.phone}</p>
+              ${order.city ? `<p><strong>Ville:</strong> ${order.city}</p>` : ''}
+            </div>
+
+            <h3>Détails de la Commande</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Taille</th>
+                  <th>Quantité</th>
+                  <th style="text-align: right;">Prix</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="total">
+              Total: ${order.total.toLocaleString('fr-FR')} FCFA
+            </div>
+
+            ${order.note ? `<div class="note"><strong>Note du client:</strong><br>${order.note}</div>` : ''}
+
+            <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+              Cet email a été envoyé automatiquement. Veuillez ne pas répondre.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resendApiKey}`
+      },
+      body: JSON.stringify({
+        from: fromDomain,
+        to: adminEmail,
+        subject: `Nouvelle commande ${order.id} - ROUKI`,
+        html: htmlContent
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json() as { id: string };
+      console.log(`✅ Email envoyé avec succès à ${adminEmail} (Resend ID: ${data.id})`);
+      
+      // Log en KV pour traçabilité
+      await kv.set(`email_logs:${order.id}`, {
+        orderId: order.id,
+        recipientEmail: adminEmail,
+        resendId: data.id,
+        status: 'SENT',
+        sentAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      });
+    } else {
+      const errorText = await response.text();
+      console.error(`❌ Erreur Resend (${response.status}):`, errorText);
+      
+      await kv.set(`email_logs:${order.id}`, {
+        orderId: order.id,
+        recipientEmail: adminEmail,
+        status: 'FAILED',
+        error: errorText,
+        createdAt: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'envoi de l\'email:', error);
+  }
+}
+
 // ==================== ORDERS ====================
 // Get all orders
 app.get("/make-server-643ea828/orders", async (c) => {
@@ -377,6 +507,9 @@ app.post("/make-server-643ea828/orders", async (c) => {
         await kv.set(`products:${item.product.id}`, { ...product, sizes: updatedSizes });
       }
     }
+
+    // Send email to admin
+    await sendOrderEmailToAdmin(newOrder);
 
     return c.json({ success: true, order: newOrder }, 201);
   } catch (error) {
