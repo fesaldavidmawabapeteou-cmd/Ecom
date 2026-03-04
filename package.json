@@ -69,9 +69,6 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   }
