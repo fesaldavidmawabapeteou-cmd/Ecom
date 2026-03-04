@@ -54,7 +54,11 @@ export function useApi() {
 }
 
 // Specific API functions
-export const ap{
+export const api = {
+  // Products
+  getProducts: async () => {
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      headers: {
         'Authorization': `Bearer ${publicAnonKey}`,
       },
     });
@@ -252,11 +256,7 @@ export const ap{
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${publicAnonKey}`,
-      }
-  resetStore: async () => {
-    const response = await fetch(`${API_BASE_URL}/admin/reset-store`, {
-      method: 'POST',
-      headers: getHeaders(),
+      },
     });
     const data = await response.json();
     if (!data.success) {

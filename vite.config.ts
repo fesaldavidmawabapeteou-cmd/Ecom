@@ -22,13 +22,20 @@ export default defineConfig({
         theme_color: '#f97316',
         icons: [
           {
-            src: 'https://via.placeholder.com/192',
+            src: '/icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'https://via.placeholder.com/512',
+            src: '/icon-512.png',
             sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/apple-touch-icon.png',
+            sizes: '180x180',
             type: 'image/png'
           }
         ]
