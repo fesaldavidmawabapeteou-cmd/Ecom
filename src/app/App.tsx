@@ -20,6 +20,7 @@ import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminStyles } from './pages/admin/AdminStyles';
 import { AdminStats } from './pages/admin/AdminStats';
+import { AdminParameters } from './pages/admin/AdminParameters';
 
 function LoadingScreen() {
   return (
@@ -62,6 +63,7 @@ function AppContent() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="styles" element={<AdminStyles />} />
           <Route path="stats" element={<AdminStats />} />
+          <Route path="parameters" element={<AdminParameters />} />
         </Route>
 
         {/* 404 */}

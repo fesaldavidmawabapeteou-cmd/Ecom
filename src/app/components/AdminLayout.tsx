@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingBag, BarChart3, LogOut, Tag } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, BarChart3, Tag, Settings } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin, logout } = useStore();
+  const { isAdmin } = useStore();
 
   useEffect(() => {
     if (!isAdmin) {
@@ -18,17 +18,13 @@ export const AdminLayout = () => {
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
-    navigate('/admin/login');
-  };
-
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/products', icon: Package, label: 'Produits' },
     { path: '/admin/orders', icon: ShoppingBag, label: 'Commandes' },
     { path: '/admin/styles', icon: Tag, label: 'Styles' },
-    { path: '/admin/stats', icon: BarChart3, label: 'Statistiques' }
+    { path: '/admin/stats', icon: BarChart3, label: 'Statistiques' },
+    { path: '/admin/parameters', icon: Settings, label: 'Paramètres' }
   ];
 
   return (
@@ -63,16 +59,6 @@ export const AdminLayout = () => {
             })}
           </div>
         </nav>
-
-        <div className="p-4 border-t border-white/40">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-3xl text-gray-700 glass-button hover:scale-105 w-full transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Déconnexion</span>
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -105,14 +91,6 @@ export const AdminLayout = () => {
                 </Link>
               );
             })}
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="flex flex-col items-center gap-0.5 sm:gap-1 py-1.5 sm:py-2 px-0.5 sm:px-1 rounded-xl text-red-500/70 hover:text-red-600 hover:bg-red-500/5 transition-all duration-300"
-            >
-              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              <span className="text-[10px] sm:text-xs truncate w-full text-center font-medium leading-tight">Quitter</span>
-            </button>
           </div>
         </div>
       </nav>

@@ -219,12 +219,12 @@ async function debugLog(message: string, data?: any) {
 }
 
 // ==================== HEALTH CHECK ====================
-app.get("/make-server-643ea828/health", (c) => {
+app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // ==================== ADMIN AUTH ====================
-app.post("/make-server-643ea828/admin/login", async (c) => {
+app.post("/admin/login", async (c) => {
   try {
     const { email, password } = await c.req.json();
 
@@ -245,9 +245,68 @@ app.post("/make-server-643ea828/admin/login", async (c) => {
   }
 });
 
+// Change admin password
+app.post("/admin/change-password", async (c) => {
+  try {
+    const { currentPassword, newPassword } = await c.req.json();
+
+    const credentials = await kv.get('admin:credentials');
+    
+    if (!credentials || credentials.password !== currentPassword) {
+      return c.json({ success: false, message: 'Mot de passe actuel incorrect' }, 401);
+    }
+
+    const updatedCredentials = {
+      ...credentials,
+      password: newPassword
+    };
+
+    await kv.set('admin:credentials', updatedCredentials);
+
+    return c.json({ 
+      success: true, 
+      message: 'Mot de passe modifié avec succès'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return c.json({ success: false, message: `Erreur: ${error}` }, 500);
+  }
+});
+
+// Reset store - delete all data
+app.post("/admin/reset-store", async (c) => {
+  try {
+    // Delete all products
+    const products = await kv.getByPrefix('products:');
+    for (const [key] of Object.entries(products || {})) {
+      await kv.delete(key);
+    }
+
+    // Delete all orders
+    const orders = await kv.getByPrefix('orders:');
+    for (const [key] of Object.entries(orders || {})) {
+      await kv.delete(key);
+    }
+
+    // Delete all styles
+    const styles = await kv.getByPrefix('styles:');
+    for (const [key] of Object.entries(styles || {})) {
+      await kv.delete(key);
+    }
+
+    return c.json({ 
+      success: true, 
+      message: 'Boutique réinitialisée avec succès'
+    });
+  } catch (error) {
+    console.error('Reset store error:', error);
+    return c.json({ success: false, message: `Erreur: ${error}` }, 500);
+  }
+});
+
 // ==================== PRODUCTS ====================
 // Get all products
-app.get("/make-server-643ea828/products", async (c) => {
+app.get("/products", async (c) => {
   try {
     const products = await kv.getByPrefix('products:');
     return c.json({ success: true, products });
@@ -258,7 +317,7 @@ app.get("/make-server-643ea828/products", async (c) => {
 });
 
 // Get single product
-app.get("/make-server-643ea828/products/:id", async (c) => {
+app.get("/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const product = await kv.get(`products:${id}`);
@@ -275,7 +334,7 @@ app.get("/make-server-643ea828/products/:id", async (c) => {
 });
 
 // Create product
-app.post("/make-server-643ea828/products", async (c) => {
+app.post("/products", async (c) => {
   try {
     const productData = await c.req.json();
     const id = `PROD-${Date.now()}`;
@@ -295,7 +354,7 @@ app.post("/make-server-643ea828/products", async (c) => {
 });
 
 // Update product
-app.put("/make-server-643ea828/products/:id", async (c) => {
+app.put("/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const existingProduct = await kv.get(`products:${id}`);
@@ -317,7 +376,7 @@ app.put("/make-server-643ea828/products/:id", async (c) => {
 });
 
 // Delete product
-app.delete("/make-server-643ea828/products/:id", async (c) => {
+app.delete("/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`products:${id}`);
@@ -466,7 +525,7 @@ async function sendOrderEmailToAdmin(order: Order) {
 
 // ==================== ORDERS ====================
 // Get all orders
-app.get("/make-server-643ea828/orders", async (c) => {
+app.get("/orders", async (c) => {
   try {
     const orders = await kv.getByPrefix('orders:');
     // Sort by createdAt descending
@@ -481,7 +540,7 @@ app.get("/make-server-643ea828/orders", async (c) => {
 });
 
 // Get single order
-app.get("/make-server-643ea828/orders/:id", async (c) => {
+app.get("/orders/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const order = await kv.get(`orders:${id}`);
@@ -498,7 +557,7 @@ app.get("/make-server-643ea828/orders/:id", async (c) => {
 });
 
 // Create order
-app.post("/make-server-643ea828/orders", async (c) => {
+app.post("/orders", async (c) => {
   try {
     await debugLog('🛍️ POST /orders called - creating new order');
     const orderData = await c.req.json();
@@ -540,7 +599,7 @@ app.post("/make-server-643ea828/orders", async (c) => {
 });
 
 // Update order status
-app.put("/make-server-643ea828/orders/:id/status", async (c) => {
+app.put("/orders/:id/status", async (c) => {
   try {
     const id = c.req.param('id');
     const { status } = await c.req.json();
@@ -563,7 +622,7 @@ app.put("/make-server-643ea828/orders/:id/status", async (c) => {
 
 // ==================== DEBUG ====================
 // Get debug logs
-app.get("/make-server-643ea828/debug_logs", async (c) => {
+app.get("/debug_logs", async (c) => {
   try {
     const logs = (await kv.get('debug_logs')) as any[] || [];
     return c.json({ success: true, logs });
@@ -573,7 +632,7 @@ app.get("/make-server-643ea828/debug_logs", async (c) => {
 });
 
 // Clear debug logs
-app.delete("/make-server-643ea828/debug_logs", async (c) => {
+app.delete("/debug_logs", async (c) => {
   try {
     await kv.del('debug_logs');
     return c.json({ success: true, message: 'Debug logs cleared' });
@@ -584,7 +643,7 @@ app.delete("/make-server-643ea828/debug_logs", async (c) => {
 
 // ==================== STYLES ====================
 // Get all styles
-app.get("/make-server-643ea828/styles", async (c) => {
+app.get("/styles", async (c) => {
   try {
     const styles = await kv.getByPrefix('styles:');
     return c.json({ success: true, styles });
@@ -595,7 +654,7 @@ app.get("/make-server-643ea828/styles", async (c) => {
 });
 
 // Create style
-app.post("/make-server-643ea828/styles", async (c) => {
+app.post("/styles", async (c) => {
   try {
     const styleData = await c.req.json();
     const id = `STYLE-${Date.now()}`;
@@ -615,7 +674,7 @@ app.post("/make-server-643ea828/styles", async (c) => {
 });
 
 // Update style
-app.put("/make-server-643ea828/styles/:id", async (c) => {
+app.put("/styles/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const existingStyle = await kv.get(`styles:${id}`);
@@ -637,7 +696,7 @@ app.put("/make-server-643ea828/styles/:id", async (c) => {
 });
 
 // Delete style
-app.delete("/make-server-643ea828/styles/:id", async (c) => {
+app.delete("/styles/:id", async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`styles:${id}`);
@@ -650,7 +709,7 @@ app.delete("/make-server-643ea828/styles/:id", async (c) => {
 });
 
 // ==================== STATS ====================
-app.get("/make-server-643ea828/stats", async (c) => {
+app.get("/stats", async (c) => {
   try {
     const [orders, products] = await Promise.all([
       kv.getByPrefix('orders:'),

@@ -54,11 +54,7 @@ export function useApi() {
 }
 
 // Specific API functions
-export const api = {
-  // Products
-  getProducts: async () => {
-    const response = await fetch(`${API_BASE_URL}/products`, {
-      headers: {
+export const ap{
         'Authorization': `Bearer ${publicAnonKey}`,
       },
     });
@@ -231,5 +227,41 @@ export const api = {
     });
     const data = await response.json();
     return data.success ? data.stats : null;
+  },
+
+  // Admin Parameters
+  changeAdminPassword: async (passwordData: { currentPassword: string; newPassword: string }) => {
+    const response = await fetch(`${API_BASE_URL}/admin/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${publicAnonKey}`,
+      },
+      body: JSON.stringify(passwordData),
+    });
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.message || 'Erreur lors du changement de mot de passe');
+    }
+    return data;
+  },
+
+  resetStore: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/reset-store`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${publicAnonKey}`,
+      }
+  resetStore: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/reset-store`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.message || 'Erreur lors de la réinitialisation');
+    }
+    return data;
   },
 };
