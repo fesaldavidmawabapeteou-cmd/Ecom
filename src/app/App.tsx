@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { StoreProvider, useStore } from './context/StoreContext';
@@ -6,21 +6,21 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdminLayout } from './components/AdminLayout';
 
-// Client Pages
-import { Home } from './pages/Home';
-import { Catalog } from './pages/Catalog';
-import { ProductDetail } from './pages/ProductDetail';
-import { Cart } from './pages/Cart';
-import { Checkout } from './pages/Checkout';
+// Lazy load pages for better performance
+const Home = React.lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const Catalog = React.lazy(() => import('./pages/Catalog').then(module => ({ default: module.Catalog })));
+const ProductDetail = React.lazy(() => import('./pages/ProductDetail').then(module => ({ default: module.ProductDetail })));
+const Cart = React.lazy(() => import('./pages/Cart').then(module => ({ default: module.Cart })));
+const Checkout = React.lazy(() => import('./pages/Checkout').then(module => ({ default: module.Checkout })));
 
 // Admin Pages
-import { AdminLogin } from './pages/admin/AdminLogin';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { AdminProducts } from './pages/admin/AdminProducts';
-import { AdminOrders } from './pages/admin/AdminOrders';
-import { AdminStyles } from './pages/admin/AdminStyles';
-import { AdminStats } from './pages/admin/AdminStats';
-import { AdminParameters } from './pages/admin/AdminParameters';
+const AdminLogin = React.lazy(() => import('./pages/admin/AdminLogin').then(module => ({ default: module.AdminLogin })));
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminProducts = React.lazy(() => import('./pages/admin/AdminProducts').then(module => ({ default: module.AdminProducts })));
+const AdminOrders = React.lazy(() => import('./pages/admin/AdminOrders').then(module => ({ default: module.AdminOrders })));
+const AdminStyles = React.lazy(() => import('./pages/admin/AdminStyles').then(module => ({ default: module.AdminStyles })));
+const AdminStats = React.lazy(() => import('./pages/admin/AdminStats').then(module => ({ default: module.AdminStats })));
+const AdminParameters = React.lazy(() => import('./pages/admin/AdminParameters').then(module => ({ default: module.AdminParameters })));
 
 function LoadingScreen() {
   return (
@@ -46,29 +46,31 @@ function AppContent() {
     <div className="min-h-screen flex flex-col">
       {!isAdminRoute && <Header />}
       
-      <Routes>
-        {/* Client Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/catalog" element={<Catalog />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          {/* Client Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="styles" element={<AdminStyles />} />
-          <Route path="stats" element={<AdminStats />} />
-          <Route path="parameters" element={<AdminParameters />} />
-        </Route>
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="styles" element={<AdminStyles />} />
+            <Route path="stats" element={<AdminStats />} />
+            <Route path="parameters" element={<AdminParameters />} />
+          </Route>
 
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
 
       {!isAdminRoute && <Footer />}
       <Toaster position="top-center" richColors />
