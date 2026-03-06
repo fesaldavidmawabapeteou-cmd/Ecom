@@ -8,6 +8,25 @@ const app = new Hono();
 // Enable logger
 app.use('*', logger(console.log));
 
+// Middleware to handle authentication
+app.use('*', async (c, next) => {
+  const authHeader = c.req.header('Authorization');
+  const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3Y2ZpbXpiaWJsamlpbG5zaGciLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MTE4NDY3NiwiZXhwIjoyMDg2NzYwNjc2fQ.p1cpfXl4OYDZ3-5hZ1Bn7pRu3E17eSeLVZRo0mMVcHc';
+  
+  if (authHeader === `Bearer ${anonKey}`) {
+    // Valid anon key, allow the request
+    await next();
+  } else {
+    // Check if it's a valid JWT (for admin operations)
+    try {
+      // For now, allow all requests - we'll add proper JWT validation later
+      await next();
+    } catch (error) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+  }
+});
+
 // Enable CORS for all routes and methods
 app.use(
   "/*",
