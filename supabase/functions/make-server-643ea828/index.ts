@@ -8,11 +8,11 @@ const app = new Hono();
 // Enable logger
 app.use('*', logger(console.log));
 
-// Middleware to handle authentication
-app.use('*', async (c, next) => {
-  // Temporarily allow all requests for testing
-  await next();
-});
+// Middleware to handle authentication - DISABLED FOR NOW
+// app.use('*', async (c, next) => {
+//   // Temporarily allow all requests for testing
+//   await next();
+// });
 
 // Enable CORS for all routes and methods
 app.use(
