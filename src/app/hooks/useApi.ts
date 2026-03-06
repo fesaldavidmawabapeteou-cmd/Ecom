@@ -1,7 +1,11 @@
 import { useState, useCallback } from 'react';
 import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { createClient } from '@supabase/supabase-js';
 
 const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-643ea828`;
+
+// Create Supabase client
+const supabase = createClient(`https://${projectId}.supabase.co`, publicAnonKey);
 
 interface ApiResponse<T> {
   success: boolean;
@@ -115,13 +119,14 @@ export const api = {
 
   // Orders
   getOrders: async () => {
-    const response = await fetch(`${API_BASE_URL}/orders`, {
-      headers: {
-        'Authorization': `Bearer ${publicAnonKey}`,
-      },
-    });
-    const data = await response.json();
-    return data.success ? data.orders : [];
+    try {
+      const { data, error } = await supabase.functions.invoke('make-server-643ea828/orders');
+      if (error) throw error;
+      return data?.success ? data.orders : [];
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      return [];
+    }
   },
 
   getOrder: async (id: string) => {
