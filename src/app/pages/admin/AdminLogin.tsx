@@ -9,10 +9,13 @@ export const AdminLogin = () => {
   const { login } = useStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     const success = await login(email, password);
+    setLoading(false);
     if (success) {
       toast.success('Connexion réussie');
       navigate('/admin/dashboard');
@@ -70,10 +73,20 @@ export const AdminLogin = () => {
 
             <button
               type="submit"
-              className="w-full bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 hover:shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Lock className="w-5 h-5" />
-              Se connecter
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Connexion...
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5" />
+                  Se connecter
+                </>
+              )}
             </button>
           </form>
         </div>

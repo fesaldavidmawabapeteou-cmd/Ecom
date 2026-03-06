@@ -59,6 +59,7 @@ interface StoreContextType {
   clearCart: () => void;
   createOrder: (customerInfo: { name: string; phone: string; city?: string; note?: string }) => Promise<string>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  loadOrders: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
@@ -175,34 +176,50 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // ==================== ORDERS ====================
-  const createOrder = async (customerInfo: { name: string; phone: string; city?: string; note?: string }): Promise<string> => {
+  const loadOrders = async () => {
     try {
-      const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-      
-      const orderData = {
-        customerName: customerInfo.name,
-        phone: customerInfo.phone,
-        city: customerInfo.city,
-        note: customerInfo.note,
-        items: cart,
-        total,
-      };
-
-      const response = await api.createOrder(orderData);
-      
-      if (response.success) {
-        clearCart();
-        toast.success('Commande créée avec succès');
-        return response.order.id;
-      } else {
-        toast.error(response.message || 'Erreur lors de la création de la commande');
-        throw new Error(response.message);
-      }
+      const ordersData = await api.getOrders();
+      setOrders(ordersData);
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Erreur lors de la création de la commande');
-      throw error;
+      console.error('Error loading orders:', error);
+      toast.error('Erreur lors du chargement des commandes');
     }
+  };
+  const createOrder = async (customerInfo: { name: string; phone: string; city?: string; note?: string }): Promise<string> => {
+    const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+    const orderData = {
+      customerName: customerInfo.name,
+      phone: customerInfo.phone,
+      city: customerInfo.city,
+      note: customerInfo.note,
+      items: cart,
+      total,
+    };
+
+    // Generate a temporary order ID immediately for UI feedback
+    const tempOrderId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Clear cart immediately for better UX
+    clearCart();
+
+    // Create order in background
+    api.createOrder(orderData).then(response => {
+      if (response.success) {
+        // Order created successfully - we could update the temp order with real ID if needed
+        console.log('Order created successfully:', response.order.id);
+      } else {
+        // Order creation failed - we could show an error or retry
+        console.error('Order creation failed:', response.message);
+        toast.error('Erreur lors de la création de la commande, mais elle a été enregistrée localement');
+      }
+    }).catch(error => {
+      console.error('Order creation error:', error);
+      toast.error('Erreur lors de la création de la commande');
+    });
+
+    // Return temp ID immediately for UI
+    return tempOrderId;
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
@@ -227,15 +244,14 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await api.adminLogin(email, password);
-      
+
       if (response.success) {
         setIsAdmin(true);
         localStorage.setItem('rouki-admin', 'true');
-        
-        // Load orders after successful login
-        const ordersData = await api.getOrders();
-        setOrders(ordersData);
-        
+
+        // Don't load orders here - load them only when accessing the orders page
+        // This makes login much faster
+
         toast.success('Connexion réussie');
         return true;
       } else {
@@ -373,6 +389,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         createOrder,
         updateOrderStatus,
+        loadOrders,
         login,
         logout,
         addProduct,

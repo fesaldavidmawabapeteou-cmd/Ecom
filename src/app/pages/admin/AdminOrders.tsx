@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import type { OrderStatus } from '../../context/StoreContext';
 
 export const AdminOrders = () => {
-  const { orders, updateOrderStatus } = useStore();
+  const { orders, updateOrderStatus, loadOrders } = useStore();
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load orders only when this page is visited
+    const loadData = async () => {
+      setLoading(true);
+      await loadOrders();
+      setLoading(false);
+    };
+    loadData();
+  }, [loadOrders]);
 
   const statusColors: Record<OrderStatus, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -23,6 +34,17 @@ export const AdminOrders = () => {
   };
 
   const selectedOrderDetails = orders.find(o => o.id === selectedOrder);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des commandes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
