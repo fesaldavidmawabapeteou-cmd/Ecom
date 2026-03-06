@@ -297,7 +297,7 @@ app.post("/make-server-643ea828/admin/reset-store", async (c) => {
 app.get("/make-server-643ea828/products", async (c) => {
   try {
     const products = await kv.getByPrefix('products:');
-    return c.json({ success: true, products });
+    return c.json({ success: true, products: Object.values(products) });
   } catch (error) {
     console.error('Error fetching products:', error);
     return c.json({ success: false, message: `Error fetching products: ${error}` }, 500);
@@ -516,7 +516,7 @@ app.get("/make-server-643ea828/orders", async (c) => {
   try {
     const orders = await kv.getByPrefix('orders:');
     // Sort by createdAt descending
-    const sortedOrders = orders.sort((a, b) => 
+    const sortedOrders = Object.values(orders).sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return c.json({ success: true, orders: sortedOrders });
@@ -608,7 +608,7 @@ app.put("/make-server-643ea828/orders/:id/status", async (c) => {
 app.get("/make-server-643ea828/styles", async (c) => {
   try {
     const styles = await kv.getByPrefix('styles:');
-    return c.json({ success: true, styles });
+    return c.json({ success: true, styles: Object.values(styles) });
   } catch (error) {
     console.error('Error fetching styles:', error);
     return c.json({ success: false, message: `Error fetching styles: ${error}` }, 500);
@@ -673,10 +673,13 @@ app.delete("/make-server-643ea828/styles/:id", async (c) => {
 // ==================== STATS ====================
 app.get("/make-server-643ea828/stats", async (c) => {
   try {
-    const [orders, products] = await Promise.all([
+    const [ordersObj, productsObj] = await Promise.all([
       kv.getByPrefix('orders:'),
       kv.getByPrefix('products:')
     ]);
+
+    const orders = Object.values(ordersObj);
+    const products = Object.values(productsObj);
 
     // Calculate stats
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
