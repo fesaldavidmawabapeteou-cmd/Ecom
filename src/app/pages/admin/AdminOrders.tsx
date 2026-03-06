@@ -11,8 +11,13 @@ export const AdminOrders = () => {
     // Load orders only when this page is visited
     const loadData = async () => {
       setLoading(true);
-      await loadOrders();
-      setLoading(false);
+      try {
+        await loadOrders();
+      } catch (error) {
+        console.error('Failed to load orders:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, [loadOrders]);
