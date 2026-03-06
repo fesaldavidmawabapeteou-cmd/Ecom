@@ -267,19 +267,19 @@ app.post("/make-server-643ea828/admin/reset-store", async (c) => {
     // Delete all products
     const products = await kv.getByPrefix('products:');
     for (const [key] of Object.entries(products || {})) {
-      await kv.delete(key);
+      await kv.del(key);
     }
 
     // Delete all orders
     const orders = await kv.getByPrefix('orders:');
     for (const [key] of Object.entries(orders || {})) {
-      await kv.delete(key);
+      await kv.del(key);
     }
 
     // Delete all styles
     const styles = await kv.getByPrefix('styles:');
     for (const [key] of Object.entries(styles || {})) {
-      await kv.delete(key);
+      await kv.del(key);
     }
 
     return c.json({ 
