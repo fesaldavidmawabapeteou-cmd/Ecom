@@ -233,6 +233,65 @@ app.post("/make-server-643ea828/admin/login", async (c) => {
   }
 });
 
+// Change admin password
+app.post("/make-server-643ea828/admin/change-password", async (c) => {
+  try {
+    const { currentPassword, newPassword } = await c.req.json();
+
+    const credentials = await kv.get('admin:credentials');
+    
+    if (!credentials || credentials.password !== currentPassword) {
+      return c.json({ success: false, message: 'Mot de passe actuel incorrect' }, 401);
+    }
+
+    const updatedCredentials = {
+      ...credentials,
+      password: newPassword
+    };
+
+    await kv.set('admin:credentials', updatedCredentials);
+
+    return c.json({ 
+      success: true, 
+      message: 'Mot de passe modifié avec succès'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return c.json({ success: false, message: `Erreur: ${error}` }, 500);
+  }
+});
+
+// Reset store - delete all data
+app.post("/make-server-643ea828/admin/reset-store", async (c) => {
+  try {
+    // Delete all products
+    const products = await kv.getByPrefix('products:');
+    for (const [key] of Object.entries(products || {})) {
+      await kv.delete(key);
+    }
+
+    // Delete all orders
+    const orders = await kv.getByPrefix('orders:');
+    for (const [key] of Object.entries(orders || {})) {
+      await kv.delete(key);
+    }
+
+    // Delete all styles
+    const styles = await kv.getByPrefix('styles:');
+    for (const [key] of Object.entries(styles || {})) {
+      await kv.delete(key);
+    }
+
+    return c.json({ 
+      success: true, 
+      message: 'Boutique réinitialisée avec succès'
+    });
+  } catch (error) {
+    console.error('Reset store error:', error);
+    return c.json({ success: false, message: `Erreur: ${error}` }, 500);
+  }
+});
+
 // ==================== PRODUCTS ====================
 // Get all products
 app.get("/make-server-643ea828/products", async (c) => {

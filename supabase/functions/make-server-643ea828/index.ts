@@ -206,25 +206,13 @@ async function initializeDefaultData() {
 // Run initialization on server start
 initializeDefaultData();
 
-// ==================== DEBUG LOGGING ====================
-async function debugLog(message: string, data?: any) {
-  const timestamp = new Date().toISOString();
-  const logEntry = { timestamp, message, data };
-  const logs = (await kv.get('debug_logs') as any[]) || [];
-  logs.push(logEntry);
-  // Keep only last 100 logs
-  if (logs.length > 100) logs.shift();
-  await kv.set('debug_logs', logs);
-  console.log(message, data);
-}
-
 // ==================== HEALTH CHECK ====================
-app.get("/health", (c) => {
+app.get("/make-server-643ea828/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // ==================== ADMIN AUTH ====================
-app.post("/admin/login", async (c) => {
+app.post("/make-server-643ea828/admin/login", async (c) => {
   try {
     const { email, password } = await c.req.json();
 
@@ -246,7 +234,7 @@ app.post("/admin/login", async (c) => {
 });
 
 // Change admin password
-app.post("/admin/change-password", async (c) => {
+app.post("/make-server-643ea828/admin/change-password", async (c) => {
   try {
     const { currentPassword, newPassword } = await c.req.json();
 
@@ -274,7 +262,7 @@ app.post("/admin/change-password", async (c) => {
 });
 
 // Reset store - delete all data
-app.post("/admin/reset-store", async (c) => {
+app.post("/make-server-643ea828/admin/reset-store", async (c) => {
   try {
     // Delete all products
     const products = await kv.getByPrefix('products:');
@@ -306,7 +294,7 @@ app.post("/admin/reset-store", async (c) => {
 
 // ==================== PRODUCTS ====================
 // Get all products
-app.get("/products", async (c) => {
+app.get("/make-server-643ea828/products", async (c) => {
   try {
     const products = await kv.getByPrefix('products:');
     return c.json({ success: true, products });
@@ -317,7 +305,7 @@ app.get("/products", async (c) => {
 });
 
 // Get single product
-app.get("/products/:id", async (c) => {
+app.get("/make-server-643ea828/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const product = await kv.get(`products:${id}`);
@@ -334,7 +322,7 @@ app.get("/products/:id", async (c) => {
 });
 
 // Create product
-app.post("/products", async (c) => {
+app.post("/make-server-643ea828/products", async (c) => {
   try {
     const productData = await c.req.json();
     const id = `PROD-${Date.now()}`;
@@ -354,7 +342,7 @@ app.post("/products", async (c) => {
 });
 
 // Update product
-app.put("/products/:id", async (c) => {
+app.put("/make-server-643ea828/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const existingProduct = await kv.get(`products:${id}`);
@@ -376,7 +364,7 @@ app.put("/products/:id", async (c) => {
 });
 
 // Delete product
-app.delete("/products/:id", async (c) => {
+app.delete("/make-server-643ea828/products/:id", async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`products:${id}`);
@@ -391,15 +379,14 @@ app.delete("/products/:id", async (c) => {
 // ==================== EMAIL SENDER ====================
 async function sendOrderEmailToAdmin(order: Order) {
   try {
-    await debugLog('📧 sendOrderEmailToAdmin called for order:', order.id);
+    console.log('📧 sendOrderEmailToAdmin called for order:', order.id);
     
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    await debugLog('🔑 RESEND_API_KEY found:', !!resendApiKey);
-    const envKeys = Object.keys(Deno.env.toObject()).filter(k => k.includes('RESEND') || k.includes('EMAIL'));
-    await debugLog('📋 Available env keys:', envKeys);
+    console.log('🔑 RESEND_API_KEY found:', !!resendApiKey);
+    console.log('📋 Available env keys:', Object.keys(Deno.env.toObject()).filter(k => k.includes('RESEND') || k.includes('EMAIL')));
     
     if (!resendApiKey) {
-      await debugLog('⚠️ RESEND_API_KEY not configured — email not sent');
+      console.warn('⚠️ RESEND_API_KEY not configured — email not sent');
       return;
     }
 
@@ -525,7 +512,7 @@ async function sendOrderEmailToAdmin(order: Order) {
 
 // ==================== ORDERS ====================
 // Get all orders
-app.get("/orders", async (c) => {
+app.get("/make-server-643ea828/orders", async (c) => {
   try {
     const orders = await kv.getByPrefix('orders:');
     // Sort by createdAt descending
@@ -540,7 +527,7 @@ app.get("/orders", async (c) => {
 });
 
 // Get single order
-app.get("/orders/:id", async (c) => {
+app.get("/make-server-643ea828/orders/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const order = await kv.get(`orders:${id}`);
@@ -557,9 +544,8 @@ app.get("/orders/:id", async (c) => {
 });
 
 // Create order
-app.post("/orders", async (c) => {
+app.post("/make-server-643ea828/orders", async (c) => {
   try {
-    await debugLog('🛍️ POST /orders called - creating new order');
     const orderData = await c.req.json();
     const id = `ORD-${Date.now()}`;
     
@@ -570,7 +556,6 @@ app.post("/orders", async (c) => {
       createdAt: new Date().toISOString()
     };
 
-    await debugLog('💾 Saving order to KV:', id);
     await kv.set(`orders:${id}`, newOrder);
 
     // Update product stock
@@ -587,19 +572,17 @@ app.post("/orders", async (c) => {
     }
 
     // Send email to admin
-    await debugLog('📧 About to call sendOrderEmailToAdmin for:', id);
     await sendOrderEmailToAdmin(newOrder);
-    await debugLog('✅ sendOrderEmailToAdmin completed for:', id);
 
     return c.json({ success: true, order: newOrder }, 201);
   } catch (error) {
-    await debugLog('❌ Error creating order:', error);
+    console.error('Error creating order:', error);
     return c.json({ success: false, message: `Error creating order: ${error}` }, 500);
   }
 });
 
 // Update order status
-app.put("/orders/:id/status", async (c) => {
+app.put("/make-server-643ea828/orders/:id/status", async (c) => {
   try {
     const id = c.req.param('id');
     const { status } = await c.req.json();
@@ -620,30 +603,9 @@ app.put("/orders/:id/status", async (c) => {
   }
 });
 
-// ==================== DEBUG ====================
-// Get debug logs
-app.get("/debug_logs", async (c) => {
-  try {
-    const logs = (await kv.get('debug_logs')) as any[] || [];
-    return c.json({ success: true, logs });
-  } catch (error) {
-    return c.json({ success: false, message: `Error fetching debug logs: ${error}` }, 500);
-  }
-});
-
-// Clear debug logs
-app.delete("/debug_logs", async (c) => {
-  try {
-    await kv.del('debug_logs');
-    return c.json({ success: true, message: 'Debug logs cleared' });
-  } catch (error) {
-    return c.json({ success: false, message: `Error clearing debug logs: ${error}` }, 500);
-  }
-});
-
 // ==================== STYLES ====================
 // Get all styles
-app.get("/styles", async (c) => {
+app.get("/make-server-643ea828/styles", async (c) => {
   try {
     const styles = await kv.getByPrefix('styles:');
     return c.json({ success: true, styles });
@@ -654,7 +616,7 @@ app.get("/styles", async (c) => {
 });
 
 // Create style
-app.post("/styles", async (c) => {
+app.post("/make-server-643ea828/styles", async (c) => {
   try {
     const styleData = await c.req.json();
     const id = `STYLE-${Date.now()}`;
@@ -674,7 +636,7 @@ app.post("/styles", async (c) => {
 });
 
 // Update style
-app.put("/styles/:id", async (c) => {
+app.put("/make-server-643ea828/styles/:id", async (c) => {
   try {
     const id = c.req.param('id');
     const existingStyle = await kv.get(`styles:${id}`);
@@ -696,7 +658,7 @@ app.put("/styles/:id", async (c) => {
 });
 
 // Delete style
-app.delete("/styles/:id", async (c) => {
+app.delete("/make-server-643ea828/styles/:id", async (c) => {
   try {
     const id = c.req.param('id');
     await kv.del(`styles:${id}`);
@@ -709,7 +671,7 @@ app.delete("/styles/:id", async (c) => {
 });
 
 // ==================== STATS ====================
-app.get("/stats", async (c) => {
+app.get("/make-server-643ea828/stats", async (c) => {
   try {
     const [orders, products] = await Promise.all([
       kv.getByPrefix('orders:'),
